@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Antrean Pelayanan Publik</title>
+    
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons: FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config for Custom Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#0056B3', // Official Blue
+                            light: '#E0F2FE',
+                            dark: '#004494',
+                        },
+                        neutral: {
+                            bg: '#F8F9FA',
+                            text: '#374151',
+                            heading: '#111827',
+                        },
+                        status: {
+                            success: '#10B981',
+                            waiting: '#F59E0B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+
+        /* Abstract Background Pattern for Right Column */
+        .bg-pattern {
+            background-color: #0056B3;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="font-sans text-neutral-text antialiased h-screen overflow-hidden flex flex-col bg-neutral-bg">
+
+    <!-- Minimal Header -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200 h-16 flex items-center px-8 justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-lg">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <span class="font-semibold text-neutral-heading text-lg tracking-tight">Pelayanan Terpadu Satu Pintu</span>
+        </div>
+        
+        <!-- Right Side: Time & Navigation -->
+        <div class="flex items-center gap-6">
+            <!-- Time Display -->
+            <div class="hidden md:flex items-center gap-4 text-sm font-medium text-gray-500">
+                <div class="flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-primary"></i>
+                    <span id="current-time">08:00 WIB</span>
+                </div>
+                <div class="h-4 w-px bg-gray-300"></div>
+                <span>Senin - Jumat, 08:00 - 16:00</span>
+            </div>
+
+            <!-- Login/Back Button -->
+            <a href="Untitled-1.html" class="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-dark transition-colors px-4 py-2 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-100">
+                <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
+                <span>Menu Utama / Login</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Layout: Split Screen -->
+    <main class="flex-1 flex pt-16 h-full">
+        
+        <!-- LEFT COLUMN (40%): Action Area -->
+        <div class="w-[40%] bg-white p-12 flex flex-col justify-center relative shadow-xl z-10">
+            
+            <div id="welcome-view" class="max-w-md mx-auto w-full fade-in">
+                <span class="inline-block py-1 px-3 rounded-full bg-primary-light text-primary text-xs font-bold mb-4 tracking-wider uppercase">
+                    Selamat Datang
+                </span>
+                <h1 class="text-4xl font-bold text-neutral-heading mb-3 leading-tight">
+                    Layanan Administrasi Kependudukan
+                </h1>
+                <p class="text-gray-500 mb-10 text-lg leading-relaxed">
+                    Silakan ambil nomor antrean Anda untuk memulai layanan. Pastikan dokumen persyaratan sudah lengkap.
+                </p>
+
+                <!-- Input Form Card -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6">
+                    <div class="space-y-5">
+                        <!-- NIK Input -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">NIK (Nomor Induk Kependudukan)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-regular fa-id-card text-gray-400"></i>
+                                </div>
+                                <input type="text" id="nikInput" class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out sm:text-sm" placeholder="Contoh: 3201..." maxlength="16">
+                            </div>
+                        </div>
+
+                        <!-- Service Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Layanan</label>
+                            <div class="relative">
+                                <select id="serviceInput" class="block w-full pl-3 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-gray-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm appearance-none cursor-pointer">
+                                    <option>Pilih Layanan...</option>
+                                    <option value="KTP">Pembuatan e-KTP</option>
+                                    <option value="KK">Kartu Keluarga (KK)</option>
+                                    <option value="AKTA">Akta Kelahiran</option>
+                                    <option value="SKCK">Surat Pindah / Datang</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primary Action Button -->
+                <button onclick="getQueueNumber()" class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 text-lg group">
+                    <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i>
+                    Ambil Nomor Antrean
+                </button>
+                
+                <p class="mt-6 text-center text-xs text-gray-400">
+                    Dengan menekan tombol, Anda menyetujui prosedur pelayanan kami.
+                </p>
+            </div>
+
+            <!-- Success State (Hidden by default) -->
+            <div id="success-view" class="hidden max-w-md mx-auto w-full text-center fade-in">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fa-solid fa-check text-3xl text-status-success"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-neutral-heading mb-2">Berhasil Terdaftar!</h2>
+                <p class="text-gray-500 mb-8">Silakan menunggu panggilan petugas.</p>
+
+                <!-- Ticket Preview -->
+                <div class="bg-white border-2 border-dashed border-gray-300 rounded-xl p-6 relative mb-8">
+                    <div class="absolute -left-3 top-1/2 w-6 h-6 bg-white rounded-full border-r border-gray-300 transform -translate-y-1/2"></div>
+                    <div class="absolute -right-3 top-1/2 w-6 h-6 bg-white rounded-full border-l border-gray-300 transform -translate-y-1/2"></div>
+                    
+                    <p class="text-sm text-gray-500 uppercase tracking-widest mb-1">Nomor Antrean Anda</p>
+                    <div class="text-5xl font-bold text-primary mb-2" id="ticket-number">A-024</div>
+                    <p class="text-sm font-medium text-gray-700 bg-gray-100 inline-block px-3 py-1 rounded" id="ticket-service">Pembuatan e-KTP</p>
+                    
+                    <div class="mt-6 flex justify-between text-xs text-gray-400 border-t pt-4">
+                        <span><i class="fa-regular fa-clock mr-1"></i> <span id="ticket-time">09:15</span></span>
+                        <span>Loket Umum</span>
+                    </div>
+                </div>
+
+                <button onclick="resetView()" class="text-primary font-medium hover:text-primary-dark transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Halaman Utama
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (60%): Information & Visualization -->
+        <div class="w-[60%] bg-pattern relative flex flex-col items-center justify-center p-16 text-white overflow-hidden">
+            
+            <!-- Decorative Elements -->
+            <div class="absolute top-0 right-0 w-96 h-96 bg-blue-400 opacity-20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400 opacity-20 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+
+            <!-- Illustration Container -->
+            <div class="relative z-10 w-full max-w-2xl">
+                
+                <!-- Main Info Header -->
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-semibold text-blue-100 mb-2">Status Antrean Real-time</h2>
+                    <p class="text-blue-200">Pantau pergerakan antrean secara langsung</p>
+                </div>
+
+                <!-- Live Stats Grid -->
+                <div class="grid grid-cols-2 gap-8">
+                    
+                    <!-- Card 1: Current Queue -->
+                    <div class="glass-card rounded-2xl p-8 flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-bullhorn text-xl"></i>
+                        </div>
+                        <p class="text-blue-100 text-sm font-medium uppercase tracking-wider mb-2">Sedang Dilayani</p>
+                        <h3 class="text-6xl font-bold text-white mb-2">A-018</h3>
+                        <p class="text-xs text-blue-200 bg-blue-900/30 px-3 py-1 rounded-full">Loket 2</p>
+                    </div>
+
+                    <!-- Card 2: Estimated Wait -->
+                    <div class="glass-card rounded-2xl p-8 flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-hourglass-half text-xl"></i>
+                        </div>
+                        <p class="text-blue-100 text-sm font-medium uppercase tracking-wider mb-2">Estimasi Tunggu</p>
+                        <h3 class="text-6xl font-bold text-white mb-2">15<span class="text-2xl font-normal ml-2">Menit</span></h3>
+                        <p class="text-xs text-blue-200 bg-blue-900/30 px-3 py-1 rounded-full">Rata-rata pelayanan</p>
+                    </div>
+                </div>
+
+                <!-- Footer Info / Illustration element -->
+                <div class="mt-12 flex items-center justify-center gap-8 opacity-70">
+                   <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-users text-2xl text-blue-300"></i>
+                        <div class="text-left">
+                            <p class="text-sm font-bold">12 Orang</p>
+                            <p class="text-xs text-blue-200">Dalam Antrean</p>
+                        </div>
+                   </div>
+                   <div class="w-px h-8 bg-blue-400/50"></div>
+                   <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-window-maximize text-2xl text-blue-300"></i>
+                        <div class="text-left">
+                            <p class="text-sm font-bold">4 Loket</p>
+                            <p class="text-xs text-blue-200">Beroperasi</p>
+                        </div>
+                   </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Simple Clock Script
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            document.getElementById('current-time').innerText = timeString;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Interaction Mockup Script
+        function getQueueNumber() {
+            const nik = document.getElementById('nikInput').value;
+            const service = document.getElementById('serviceInput').options[document.getElementById('serviceInput').selectedIndex].text;
+            
+            // Simple validation simulation
+            if(document.getElementById('serviceInput').selectedIndex === 0) {
+                alert("Mohon pilih jenis layanan terlebih dahulu.");
+                return;
+            }
+
+            // Simulate loading or processing
+            const btn = document.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
+            
+            setTimeout(() => {
+                // Set ticket details
+                document.getElementById('ticket-service').innerText = service;
+                document.getElementById('ticket-time').innerText = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                
+                // Switch Views
+                document.getElementById('welcome-view').classList.add('hidden');
+                document.getElementById('success-view').classList.remove('hidden');
+                
+                // Reset button for next time
+                btn.innerHTML = originalText;
+            }, 1000);
+        }
+
+        function resetView() {
+            // Reset inputs
+            document.getElementById('nikInput').value = '';
+            document.getElementById('serviceInput').selectedIndex = 0;
+
+            // Switch Views Back
+            document.getElementById('success-view').classList.add('hidden');
+            document.getElementById('welcome-view').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

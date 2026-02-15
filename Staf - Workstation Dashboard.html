@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staf Workstation - Loket 1</title>
+    
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons: FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#0056B3',
+                            hover: '#004494',
+                            light: '#E0F2FE',
+                        },
+                        neutral: {
+                            bg: '#F3F4F6', // Slightly darker for desktop app feel
+                            card: '#FFFFFF',
+                            text: '#374151',
+                            heading: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Smooth transitions for dashboard elements */
+        .dashboard-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Sidebar transition */
+        #waiting-list-sidebar {
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
+
+        /* Giant Number Typography */
+        .queue-number-display {
+            font-feature-settings: "tnum"; /* Tabular numbers for alignment */
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Pulse animation for 'Calling' status */
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(0, 86, 179, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(0, 86, 179, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 86, 179, 0); }
+        }
+        .calling-active {
+            animation: pulse-ring 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-neutral-bg h-screen flex flex-col overflow-hidden font-sans text-neutral-text">
+
+    <!-- 1. TOPBAR -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-30 shrink-0">
+        <!-- Left: Station ID -->
+        <div class="flex items-center gap-4">
+            <div class="bg-primary text-white px-3 py-1 rounded font-bold text-sm tracking-wide">
+                LOKET 01
+            </div>
+            <h1 class="font-semibold text-lg text-neutral-heading">Layanan Kependudukan (e-KTP)</h1>
+        </div>
+
+        <!-- Right: Staff Profile & Time -->
+        <div class="flex items-center gap-6">
+            <div class="hidden md:block text-right">
+                <p class="text-xs text-gray-400 uppercase font-medium tracking-wider">Waktu Server</p>
+                <p class="font-mono font-medium text-lg leading-none" id="server-time">08:30:45</p>
+            </div>
+            <div class="h-8 w-px bg-gray-200"></div>
+            <div class="flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=0056B3&color=fff" alt="Profile" class="w-9 h-9 rounded-full border border-gray-200">
+                <div class="hidden md:block">
+                    <p class="text-sm font-medium text-neutral-heading leading-tight">Budi Santoso</p>
+                    <p class="text-xs text-gray-500">Petugas Senior</p>
+                </div>
+                <button onclick="window.location.href='Untitled-1.html'" class="ml-2 text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Logout">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- 2. MAIN STAGE (Center Area) -->
+        <main class="flex-1 flex flex-col relative overflow-y-auto p-6 md:p-8 items-center justify-center">
+            
+            <!-- Dashboard Container -->
+            <div class="w-full max-w-4xl flex flex-col gap-8">
+                
+                <!-- Status Bar & Timer -->
+                <div class="flex justify-between items-end px-2">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500 uppercase tracking-wide">Status Saat Ini</span>
+                        <div id="status-badge" class="flex items-center gap-2 mt-1 text-gray-400">
+                            <i class="fa-solid fa-circle text-xs"></i>
+                            <span class="font-semibold text-lg">Menunggu Panggilan...</span>
+                        </div>
+                    </div>
+                    <div class="text-right opacity-0 transition-opacity duration-300" id="service-timer-container">
+                        <span class="text-sm text-gray-500">Durasi Pelayanan</span>
+                        <div class="font-mono text-3xl font-bold text-neutral-heading" id="stopwatch">00:00</div>
+                    </div>
+                </div>
+
+                <!-- BIG NUMBER CARD -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center relative overflow-hidden dashboard-card">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gray-200" id="status-bar-top"></div>
+                    
+                    <p class="text-gray-500 font-medium mb-4">Nomor Antrean</p>
+                    
+                    <!-- The Big Number -->
+                    <h2 id="current-number" class="text-9xl font-extrabold text-gray-300 tracking-tight queue-number-display mb-2 select-none">
+                        ----
+                    </h2>
+                    
+                    <p id="citizen-name" class="text-xl text-gray-400 font-medium h-8">
+                        <!-- Placeholder for Citizen Name/Category -->
+                        &nbsp;
+                    </p>
+                </div>
+
+                <!-- 3. ACTION CONTROLS (Big Buttons) -->
+                <div class="grid grid-cols-12 gap-4 h-32">
+                    
+                    <!-- Secondary Actions (Left) -->
+                    <div class="col-span-3 flex flex-col gap-2">
+                        <button id="btn-recall" disabled class="flex-1 bg-white border-2 border-amber-400 text-amber-500 hover:bg-amber-50 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:border-gray-200 disabled:text-gray-400">
+                            <i class="fa-solid fa-bullhorn text-xl"></i>
+                            <span>Panggil Ulang</span>
+                        </button>
+                        <button id="btn-skip" disabled class="flex-1 bg-white border-2 border-red-400 text-red-500 hover:bg-red-50 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:border-gray-200 disabled:text-gray-400">
+                            <i class="fa-solid fa-forward text-xl"></i>
+                            <span>Lewati</span>
+                        </button>
+                    </div>
+
+                    <!-- PRIMARY ACTION (Center - Biggest) -->
+                    <div class="col-span-6">
+                        <!-- Call Next Button -->
+                        <button id="btn-next" onclick="callNext()" class="w-full h-full bg-primary hover:bg-primary-hover active:scale-95 text-white rounded-xl shadow-xl shadow-blue-200 hover:shadow-2xl transition-all flex flex-col items-center justify-center gap-1 group">
+                            <span class="text-2xl font-bold">Panggil Berikutnya</span>
+                            <span class="text-blue-200 text-sm group-hover:text-white transition-colors">Antrean Selanjutnya: A-019</span>
+                            <i class="fa-solid fa-circle-play text-4xl mt-1 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform"></i>
+                        </button>
+
+                        <!-- Finish Button (Hidden initially) -->
+                        <button id="btn-finish" onclick="finishService()" class="hidden w-full h-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-xl shadow-xl shadow-emerald-200 hover:shadow-2xl transition-all flex flex-col items-center justify-center gap-1 group">
+                            <span class="text-2xl font-bold">Selesai Pelayanan</span>
+                            <span class="text-emerald-100 text-sm">Akhiri sesi antrean ini</span>
+                            <i class="fa-solid fa-check-circle text-4xl mt-1 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform"></i>
+                        </button>
+                    </div>
+
+                    <!-- Info/Stats (Right) -->
+                    <div class="col-span-3 bg-white rounded-xl border border-gray-200 p-4 flex flex-col justify-center items-center text-center shadow-sm">
+                        <p class="text-sm text-gray-500 mb-1">Total Dilayani</p>
+                        <p class="text-4xl font-bold text-neutral-heading" id="served-count">12</p>
+                        <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
+                            <div class="bg-primary h-full rounded-full" style="width: 45%"></div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Target: 30 / hari</p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 4. SIDEBAR (Collapsible Waiting List) -->
+        <aside id="waiting-list-sidebar" class="w-80 bg-white border-l border-gray-200 flex flex-col z-20 relative transform translate-x-0">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-primary"></i>
+                    <h3 class="font-semibold text-neutral-heading">Waiting List</h3>
+                    <span class="bg-primary text-white text-xs px-2 py-0.5 rounded-full">8</span>
+                </div>
+                <button onclick="toggleSidebar()" class="text-gray-400 hover:text-primary transition-colors lg:hidden">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <!-- List Container -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- List Item 1 -->
+                <div class="p-3 rounded-lg border border-blue-100 bg-blue-50 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors">
+                    <div>
+                        <p class="font-bold text-primary text-lg">A-019</p>
+                        <p class="text-xs text-gray-500">e-KTP • Baru saja</p>
+                    </div>
+                    <span class="text-xs font-semibold text-blue-600 bg-white px-2 py-1 rounded border border-blue-200">Next</span>
+                </div>
+
+                <!-- List Item 2 -->
+                <div class="p-3 rounded-lg border border-gray-100 bg-white flex items-center justify-between hover:border-primary transition-colors">
+                    <div>
+                        <p class="font-bold text-gray-700">A-020</p>
+                        <p class="text-xs text-gray-500">KK • 2 min lalu</p>
+                    </div>
+                </div>
+                <!-- List Item 3 -->
+                <div class="p-3 rounded-lg border border-gray-100 bg-white flex items-center justify-between hover:border-primary transition-colors">
+                    <div>
+                        <p class="font-bold text-gray-700">A-021</p>
+                        <p class="text-xs text-gray-500">e-KTP • 5 min lalu</p>
+                    </div>
+                </div>
+                <!-- List Item 4 -->
+                <div class="p-3 rounded-lg border border-gray-100 bg-white flex items-center justify-between hover:border-primary transition-colors">
+                    <div>
+                        <p class="font-bold text-gray-700">A-022</p>
+                        <p class="text-xs text-gray-500">Akta • 8 min lalu</p>
+                    </div>
+                </div>
+                 <!-- List Item 5 -->
+                 <div class="p-3 rounded-lg border border-gray-100 bg-white flex items-center justify-between hover:border-primary transition-colors">
+                    <div>
+                        <p class="font-bold text-gray-700">A-023</p>
+                        <p class="text-xs text-gray-500">Surat Pindah • 10 min lalu</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50 text-center">
+                <button class="text-sm text-primary font-medium hover:underline">Lihat Semua Antrean</button>
+            </div>
+        </aside>
+
+        <!-- Toggle Sidebar Button (Visible when sidebar collapsed/mobile) -->
+        <button onclick="toggleSidebar()" class="fixed bottom-6 right-6 lg:hidden bg-white p-3 rounded-full shadow-lg border border-gray-200 text-primary z-40">
+            <i class="fa-solid fa-list"></i>
+        </button>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- Variables ---
+        let currentQueue = 19;
+        let isServing = false;
+        let timerInterval;
+        let seconds = 0;
+        
+        // --- Elements ---
+        const displayNum = document.getElementById('current-number');
+        const displayName = document.getElementById('citizen-name');
+        const statusBarTop = document.getElementById('status-bar-top');
+        const statusBadge = document.getElementById('status-badge');
+        
+        const btnNext = document.getElementById('btn-next');
+        const btnFinish = document.getElementById('btn-finish');
+        const btnRecall = document.getElementById('btn-recall');
+        const btnSkip = document.getElementById('btn-skip');
+        
+        const timerContainer = document.getElementById('service-timer-container');
+        const stopwatchEl = document.getElementById('stopwatch');
+
+        // --- Functions ---
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('server-time').innerText = now.toLocaleTimeString('id-ID');
+        }
+        setInterval(updateClock, 1000);
+
+        function startTimer() {
+            seconds = 0;
+            stopwatchEl.innerText = "00:00";
+            timerContainer.classList.remove('opacity-0');
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                stopwatchEl.innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerContainer.classList.add('opacity-0');
+        }
+
+        function callNext() {
+            // UI State Change: Calling
+            isServing = true;
+            
+            // Visual Update
+            displayNum.innerText = `A-0${currentQueue}`;
+            displayNum.classList.remove('text-gray-300');
+            displayNum.classList.add('text-primary');
+            
+            displayName.innerText = "Pembuatan e-KTP";
+            
+            statusBarTop.className = "absolute top-0 left-0 w-full h-2 bg-primary calling-active";
+            
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle text-xs text-primary"></i> <span class="font-semibold text-lg text-primary">Sedang Memanggil...</span>';
+
+            // Button Swapping
+            btnNext.classList.add('hidden');
+            btnFinish.classList.remove('hidden');
+            
+            // Enable Controls
+            btnRecall.disabled = false;
+            btnSkip.disabled = false;
+            
+            // Simulate playing sound logic here
+            console.log("Playing sound: Ding Dong...");
+
+            // Start Service Timer
+            startTimer();
+        }
+
+        function finishService() {
+            // Update Stats (Mockup)
+            const countEl = document.getElementById('served-count');
+            countEl.innerText = parseInt(countEl.innerText) + 1;
+
+            // Reset UI State
+            isServing = false;
+            currentQueue++; // Increment for next label logic
+            
+            // Visual Reset
+            displayNum.classList.remove('text-primary');
+            displayNum.classList.add('text-gray-300'); // Dim number
+            // Keep number visible but dimmed, or reset to ----
+            // displayNum.innerText = "----"; 
+            
+            displayName.innerText = "Pelayanan Selesai";
+            
+            statusBarTop.className = "absolute top-0 left-0 w-full h-2 bg-emerald-500"; // Success Flash
+            setTimeout(() => { statusBarTop.className = "absolute top-0 left-0 w-full h-2 bg-gray-200"; }, 1000);
+
+            statusBadge.innerHTML = '<i class="fa-solid fa-check text-xs text-emerald-500"></i> <span class="font-semibold text-lg text-emerald-600">Pelayanan Selesai</span>';
+
+            // Button Swapping Back
+            btnNext.classList.remove('hidden');
+            btnFinish.classList.add('hidden');
+            
+            // Disable Controls
+            btnRecall.disabled = true;
+            btnSkip.disabled = true;
+
+            // Update Next Button Text
+            btnNext.querySelector('span.text-blue-200').innerText = `Antrean Selanjutnya: A-0${currentQueue}`;
+
+            stopTimer();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('waiting-list-sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('w-0');
+            sidebar.classList.toggle('opacity-0');
+        }
+
+    </script>
+</body>
+</html>
