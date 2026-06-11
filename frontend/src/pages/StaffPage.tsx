@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { callTicket, getCounters, getNextTicket, type Counter, type Ticket } from '../lib/api';
+import { callTicket, completeTicket, getCounters, getNextTicket, recallTicket, skipTicket, type Counter, type Ticket } from '../lib/api';
 
 export function StaffPage() {
   const [counters, setCounters] = useState<Counter[]>([]);
@@ -45,6 +45,27 @@ export function StaffPage() {
     }
   }
 
+  async function updateCurrentTicket(action: 'recall' | 'skip' | 'complete') {
+    if (!counterId || !nextTicket) {
+      return;
+    }
+
+    setStatus(`Memproses ${action}...`);
+    try {
+      const updated =
+        action === 'recall'
+          ? await recallTicket(nextTicket.id, counterId)
+          : action === 'skip'
+            ? await skipTicket(nextTicket.id, counterId)
+            : await completeTicket(nextTicket.id, counterId);
+
+      setNextTicket(updated);
+      setStatus(`Tiket ${updated.ticketNumber} diperbarui menjadi ${updated.status}`);
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
+  }
+
   return (
     <section className="panel">
       <h2>Dashboard Staf Loket</h2>
@@ -63,6 +84,9 @@ export function StaffPage() {
       <div className="row">
         <button type="button" onClick={loadNext}>Ambil Berikutnya</button>
         <button type="button" onClick={callCurrent} disabled={!nextTicket}>Panggil</button>
+        <button type="button" onClick={() => updateCurrentTicket('recall')} disabled={!nextTicket}>Recall</button>
+        <button type="button" onClick={() => updateCurrentTicket('skip')} disabled={!nextTicket}>Skip</button>
+        <button type="button" onClick={() => updateCurrentTicket('complete')} disabled={!nextTicket}>Selesai</button>
       </div>
       <div className="ticket-box">
         <p>Antrean saat ini</p>

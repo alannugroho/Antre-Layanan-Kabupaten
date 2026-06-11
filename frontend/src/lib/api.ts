@@ -22,6 +22,13 @@ export interface Ticket {
   createdAt: string;
 }
 
+export interface HistoryTicket extends Ticket {
+  citizenNik: string;
+  assignedCounterId?: string;
+  calledAt?: string;
+  completedAt?: string;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -39,10 +46,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function login(role: 'admin' | 'staff', nip: string, password: string) {
+export function login(nip: string, password: string) {
   return request<{ accessToken: string; role: 'admin' | 'staff' }>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ role, nip, password })
+    body: JSON.stringify({ nip, password })
   });
 }
 
@@ -72,6 +79,31 @@ export function callTicket(ticketId: string, counterId: string) {
   });
 }
 
+export function recallTicket(ticketId: string, counterId: string) {
+  return request<Ticket>(`/tickets/${ticketId}/recall`, {
+    method: 'POST',
+    body: JSON.stringify({ counterId })
+  });
+}
+
+export function skipTicket(ticketId: string, counterId: string) {
+  return request<Ticket>(`/tickets/${ticketId}/skip`, {
+    method: 'POST',
+    body: JSON.stringify({ counterId })
+  });
+}
+
+export function completeTicket(ticketId: string, counterId: string) {
+  return request<Ticket>(`/tickets/${ticketId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify({ counterId })
+  });
+}
+
 export function getSummary() {
   return request<{ totalTickets: number; waiting: number; called: number; completed: number; activeCounters: number }>('/reports/summary');
+}
+
+export function getHistory(limit = 10) {
+  return request<HistoryTicket[]>(`/reports/history?limit=${limit}`);
 }
