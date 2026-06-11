@@ -1,0 +1,2 @@
+-- Seed draft
+-- Add baseline service categories and counters for local development.
