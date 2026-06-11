@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { login } from '../lib/api';
+import { useAuth } from '../lib/auth';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<'admin' | 'staff'>('staff');
+  const { session, isReady, setSession } = useAuth();
   const [nip, setNip] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
@@ -15,32 +16,26 @@ export function LoginPage() {
     setStatus('Memproses login...');
 
     try {
-      await login(role, nip, password);
-      if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/staf/dashboard');
-      }
+      const response = await login(nip, password);
+      setSession({ accessToken: response.accessToken, role: response.role });
+      navigate(response.role === 'admin' ? '/admin/dashboard' : '/staf/dashboard', { replace: true });
     } catch (error) {
       setStatus((error as Error).message);
     }
   }
 
+  if (isReady && session) {
+    return <Navigate to={session.role === 'admin' ? '/admin/dashboard' : '/staf/dashboard'} replace />;
+  }
+
   return (
     <section className="panel">
       <h2>Portal Login</h2>
-      <p>Gunakan akun staf atau admin, atau masuk sebagai warga.</p>
+      <p>Masukkan NIP dan password. Sistem akan mengenali peran akun secara otomatis.</p>
       <div className="row-gap">
         <button type="button" onClick={() => navigate('/warga')}>Masuk sebagai Warga</button>
       </div>
       <form onSubmit={handleSubmit} className="row-gap">
-        <label>
-          Peran
-          <select value={role} onChange={(e) => setRole(e.target.value as 'admin' | 'staff')}>
-            <option value="staff">Staf Loket</option>
-            <option value="admin">Administrator</option>
-          </select>
-        </label>
         <label>
           NIP
           <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="Masukkan NIP" required />
